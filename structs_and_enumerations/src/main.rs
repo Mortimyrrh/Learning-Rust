@@ -21,7 +21,7 @@ impl TryFrom<&str> for LineData {
             let parts: Vec<&str> = line.splitn(2, ":").collect();
 
             let name: &str = parts[0];
-            let number: u32 = parts[1].parse::<u32>()?;
+            let number = parts[1].parse()?;
             return Ok(LineData::NameAndNumber(name.to_string(), number))
         }
     }
@@ -48,15 +48,16 @@ fn main() -> Result<(), Box<dyn Error>>{
 
     let file_data = parse_file(&file_name)?;
 
-    let mut score_cards:HashMap<String, ScoreCard>;
+    let mut score_cards:HashMap<String, ScoreCard> = HashMap::new();
     
     for l in file_data {
 
-        match score_cards {
-            LineData::NameOnly(name) => score_cards.entry(name).or_insert(ScoreCard::default())
+        match l {
+            LineData::NameOnly(name) => score_cards.entry(name).or_default().missed_test(),
+            LineData::NameAndNumber(name, number) => score_cards.entry(name).or_default().add_score(number)
         }
 
-        println!("{:?}", l);
+        println!("{:?}", "");
     }
     
     Ok(())
