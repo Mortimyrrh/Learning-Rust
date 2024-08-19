@@ -1,35 +1,30 @@
-use std::fs;
+use core::fmt;
+use std::collections::HashMap;
 use std::env::args;
 use std::error::Error;
-use std::collections::HashMap;
+use std::fmt::write;
+use std::fs;
 
 #[derive(Debug)]
 enum LineData {
     NameAndNumber(String, u32),
-    NameOnly(String)
+    NameOnly(String),
 }
 
 impl TryFrom<&str> for LineData {
     type Error = Box<dyn Error>;
 
     fn try_from(line: &str) -> Result<Self, Self::Error> {
-
-        if !line.contains(':')
-        {
-            return Ok(LineData::NameOnly(line.to_string()));
-        } else {
-            let parts: Vec<&str> = line.splitn(2, ":").collect();
-
-            let name: &str = parts[0];
-            let number = parts[1].parse()?;
-            return Ok(LineData::NameAndNumber(name.to_string(), number))
+        match line.split_once(":") {
+            Some(s) => Ok(LineData::NameAndNumber(s.0.to_owned(), s.1.parse()?)),
+            None => Ok(LineData::NameOnly(line.to_string())),
         }
     }
 }
 
-fn parse_file(file_name: &str) -> Result<Vec<LineData>, Box<dyn Error>>
-{
-    let file_contents = fs::read_to_string(&file_name)?;
+fn parse_file(file_name: &str) -> Result<Vec<LineData>, Box<dyn Error>> {
+    // file name is not a string
+    let file_contents = fs::read_to_string(&file_name)?; // reads as chars and not u8 (this increases memory usage 4x)
 
     let mut data: Vec<LineData> = Vec::new();
 
@@ -40,26 +35,29 @@ fn parse_file(file_name: &str) -> Result<Vec<LineData>, Box<dyn Error>>
     Ok(data)
 }
 
-fn main() -> Result<(), Box<dyn Error>>{
+fn main() -> Result<(), Box<dyn Error>> {
     // S2 P1 - Practice for structs and enumerations
-    
+
     // Get file name from args.
     let file_name = args().nth(1).ok_or("Expected filename")?;
 
     let file_data = parse_file(&file_name)?;
 
-    let mut score_cards:HashMap<String, ScoreCard> = HashMap::new();
-    
-    for l in file_data {
+    let mut score_cards: HashMap<String, ScoreCard> = HashMap::new();
 
+    for l in file_data {
         match l {
             LineData::NameOnly(name) => score_cards.entry(name).or_default().missed_test(),
-            LineData::NameAndNumber(name, number) => score_cards.entry(name).or_default().add_score(number)
+            LineData::NameAndNumber(name, number) => {
+                score_cards.entry(name).or_default().add_score(number)
+            }
         }
-
-        println!("{:?}", "");
     }
-    
+
+    for (name, card) in score_cards {
+        println!("{name} took {card}");
+    }
+
     Ok(())
 }
 
@@ -80,7 +78,7 @@ impl ScoreCard {
         self.missed_tests += 1;
     }
 
-    fn get_total(&self) -> u32 {
+    fn get_total_score(&self) -> u32 {
         self.running_total
     }
 
@@ -90,5 +88,27 @@ impl ScoreCard {
 
     fn get_missed_tests(&self) -> u32 {
         self.missed_tests
+    }
+}
+
+impl fmt::Display for ScoreCard {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} {}, with a total score of {}. They missed {} {}.",
+            self.get_tests_taken(),
+            if self.get_tests_taken() == 1 {
+                "test"
+            } else {
+                "tests"
+            },
+            self.get_total_score(),
+            self.get_missed_tests(),
+            if self.get_missed_tests() == 1 {
+                "test"
+            } else {
+                "tests"
+            }
+        )
     }
 }
