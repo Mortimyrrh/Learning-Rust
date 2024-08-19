@@ -1,5 +1,4 @@
-    ---8<---
-    This is your input file
+This is your input file
 
     Anything which is not one of the important characters will be ignored
     by the program
@@ -20,4 +19,3 @@
        >-.---.>..>.<<<<-.<+.>>>>>.>.<<.<-.
 
     But perhaps you're as lost as a little lamb?
-    ---8<---
