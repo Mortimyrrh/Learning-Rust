@@ -2,7 +2,6 @@ use core::fmt;
 use std::collections::HashMap;
 use std::env::args;
 use std::error::Error;
-use std::fmt::write;
 use std::fs;
 
 #[derive(Debug)]
@@ -15,7 +14,7 @@ impl TryFrom<&str> for LineData {
     type Error = Box<dyn Error>;
 
     fn try_from(line: &str) -> Result<Self, Self::Error> {
-        match line.split_once(":") {
+        match line.split_once(':') {
             Some(s) => Ok(LineData::NameAndNumber(s.0.to_owned(), s.1.parse()?)),
             None => Ok(LineData::NameOnly(line.to_string())),
         }
@@ -24,12 +23,12 @@ impl TryFrom<&str> for LineData {
 
 fn parse_file(file_name: &str) -> Result<Vec<LineData>, Box<dyn Error>> {
     // file name is not a string
-    let file_contents = fs::read_to_string(&file_name)?; // reads as chars and not u8 (this increases memory usage 4x)
+    let file_contents = fs::read_to_string(file_name)?; // reads as chars and not u8 (this increases memory usage 4x)
 
     let mut data: Vec<LineData> = Vec::new();
 
     for line in file_contents.lines() {
-        data.push(<LineData>::try_from(line)?);
+        data.push(line.try_into()?);
     }
 
     Ok(data)
@@ -78,15 +77,15 @@ impl ScoreCard {
         self.missed_tests += 1;
     }
 
-    fn get_total_score(&self) -> u32 {
+    fn running_total(&self) -> u32 {
         self.running_total
     }
 
-    fn get_tests_taken(&self) -> u32 {
+    fn tests_taken(&self) -> u32 {
         self.tests_taken
     }
 
-    fn get_missed_tests(&self) -> u32 {
+    fn missed_tests(&self) -> u32 {
         self.missed_tests
     }
 }
@@ -96,15 +95,15 @@ impl fmt::Display for ScoreCard {
         write!(
             f,
             "{} {}, with a total score of {}. They missed {} {}.",
-            self.get_tests_taken(),
-            if self.get_tests_taken() == 1 {
+            self.tests_taken(),
+            if self.tests_taken() == 1 {
                 "test"
             } else {
                 "tests"
             },
-            self.get_total_score(),
-            self.get_missed_tests(),
-            if self.get_missed_tests() == 1 {
+            self.running_total(),
+            self.missed_tests(),
+            if self.missed_tests() == 1 {
                 "test"
             } else {
                 "tests"

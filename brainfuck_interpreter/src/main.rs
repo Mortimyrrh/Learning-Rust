@@ -2,7 +2,6 @@ use core::fmt;
 use std::env::args;
 use std::error::Error;
 use std::ffi::OsStr;
-use std::fmt::write;
 use std::fs;
 use std::path::PathBuf;
 
@@ -19,16 +18,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
-
-// naive approach
-// for c in file_contents.to_string().chars()
-// {
-//     match c {
-//         '>'| '<'| '+'| '-'| '.'| ','|'[' | ']' => parsed.push(c),
-//         _ => (),
-//     };
-// }
-// dbg!(parsed);
 
 enum RawInstruction {
     MoveRight,
@@ -93,11 +82,8 @@ fn parse_file(path: PathBuf) -> Result<Vec<InputInstruction>, Box<dyn Error>> {
 
     let mut instructions: Vec<InputInstruction> = Vec::new();
 
-    let mut line_number = 1;
-    let mut char_column = 1;
-
-    for line in file_contents.lines() {
-        for character in line.chars() {
+    for (line_number, line) in file_contents.lines().enumerate() {
+        for (char_column, character) in line.chars().enumerate() {
             match RawInstruction::from_char(character) {
                 Some(raw_instruction) => instructions.push(InputInstruction {
                     raw_instruction: raw_instruction,
@@ -107,9 +93,7 @@ fn parse_file(path: PathBuf) -> Result<Vec<InputInstruction>, Box<dyn Error>> {
                 }),
                 None => (), // ignore invalid characters for now,
             }
-            char_column += 1;
         }
-        line_number += 1;
     }
 
     Ok(instructions)
@@ -121,8 +105,8 @@ impl fmt::Display for InputInstruction {
             f,
             "[{:?}:{}:{}] {}",
             self.file_path.file_name(),
-            self.line_number,
-            self.char_column,
+            self.line_number + 1,
+            self.char_column + 1,
             self.raw_instruction
         )
     }
